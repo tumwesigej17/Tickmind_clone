@@ -1,6 +1,8 @@
-python-telegram-bot==22.8
-yfinance
-requests
-pandas
-pytz
 flask
+python-telegram-bot
+yfinance
+pandas
+numpy
+requests
+curl_cffi
+lxml
