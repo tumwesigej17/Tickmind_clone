@@ -1,7 +1,5 @@
-flask
+Flask
 python-telegram-bot==20.7
-yfinance==0.2.38
+yfinance
 pandas
-numpy
 curl_cffi
-lxml
