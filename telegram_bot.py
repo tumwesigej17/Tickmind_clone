@@ -23,7 +23,7 @@ def get_scalp_data(ticker):
         stk = yf.Ticker(ticker, session=session)
         df = stk.history(period="5d", interval="15m", auto_adjust=False)
         if df.empty:
-            return None, "No 15m data for this ticker", False
+            return None, "No 15m data", False
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         price = float(df['Close'].iloc[-1])
@@ -44,50 +44,17 @@ def get_scalp_data(ticker):
         lc = (df['Low'] - df['Close'].shift()).abs()
         tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
         atr = float(tr.rolling(14).mean().iloc[-1])
-        if price > ema9 > ema21 and rsi_val > 50 and rsi_val < 70:
-            sig = "🟢 SCALP BUY - Momentum"
-            sl = price - atr*1.0
-            tp1 = price + atr*1.0
-            tp2 = price + atr*2.0
-            is_strong = True
+        if price > ema9 > ema21 and rsi_val > 50:
+            sig = "🟢 SCALP BUY"; sl = price - atr*1.0; tp1 = price + atr*1.0; tp2 = price + atr*2.0; is_strong=True
         elif price < ema9 and ema9 < ema21 and rsi_val < 50:
-            sig = "🔴 SCALP SELL - Momentum"
-            sl = price + atr*1.0
-            tp1 = price - atr*1.0
-            tp2 = price - atr*2.0
-            is_strong = True
+            sig = "🔴 SCALP SELL"; sl = price + atr*1.0; tp1 = price - atr*1.0; tp2 = price - atr*2.0; is_strong=True
         elif rsi_val < 25:
-            sig = "🔵 SCALP BUY - Oversold Bounce"
-            sl = price - atr*0.8
-            tp1 = price + atr*1.2
-            tp2 = price + atr*2.5
-            is_strong = True
+            sig = "🔵 SCALP BUY - Oversold"; sl = price - atr*0.8; tp1 = price + atr*1.2; tp2 = price + atr*2.5; is_strong=True
         elif rsi_val > 75:
-            sig = "🟠 SCALP SELL - Overbought Fade"
-            sl = price + atr*0.8
-            tp1 = price - atr*1.2
-            tp2 = price - atr*2.5
-            is_strong = True
+            sig = "🟠 SCALP SELL - Overbought"; sl = price + atr*0.8; tp1 = price - atr*1.2; tp2 = price - atr*2.5; is_strong=True
         else:
-            sig = f"⚪ NO SCALP - RSI {rsi_val:.1f}"
-            sl = price - atr
-            tp1 = price + atr
-            tp2 = price + atr*2
-            is_strong = False
-        msg = f"""⚡ *{ticker.upper()} - SCALP (15min)* ⚡
-
-💰 Price: ${price:.2f} ({change:+.2f}%) | ATR15m: ${atr:.2f}
-EMA9: ${ema9:.2f} EMA21: ${ema21:.2f}
-RSI: {rsi_val:.1f}
-
-🚀 {sig}
-
-🛑 SL: ${sl:.2f} ({(sl-price)/price*100:+.2f}%)
-🎯 TP1: ${tp1:.2f} ({(tp1-price)/price*100:+.2f}%)
-🎯 TP2: ${tp2:.2f}
-
-⏱️ Hold: 5-60 min | Scalp Mode
-"""
+            sig = f"⚪ NO SCALP - RSI {rsi_val:.1f}"; sl = price - atr; tp1 = price + atr; tp2 = price + atr*2; is_strong=False
+        msg = f"⚡ *{ticker.upper()} - SCALP (15min)* ⚡\n\n💰 Price: ${price:.2f} ({change:+.2f}%) | ATR15m: ${atr:.2f}\nEMA9: ${ema9:.2f} EMA21: ${ema21:.2f}\nRSI: {rsi_val:.1f}\n\n🚀 {sig}\n\n🛑 SL: ${sl:.2f}\n🎯 TP1: ${tp1:.2f}\n🎯 TP2: ${tp2:.2f}\n\n⏱️ Hold: 5-60 min"
         return msg, None, is_strong
     except Exception as e:
         return None, str(e), False
@@ -99,7 +66,7 @@ def get_data(ticker):
         if df.empty:
             df = yf.download(ticker, period="1y", session=session, progress=False)
         if df.empty:
-            return None, "Ticker not found / Yahoo blocked", False
+            return None, "Ticker not found", False
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
         price = float(df['Close'].iloc[-1])
@@ -126,106 +93,43 @@ def get_data(ticker):
         df['MACD_Sig'] = df['MACD'].ewm(span=9).mean()
         macd = float(df['MACD'].iloc[-1])
         macd_sig = float(df['MACD_Sig'].iloc[-1])
-        df['BB_Mid'] = df['Close'].rolling(20).mean()
-        df['BB_Std'] = df['Close'].rolling(20).std()
-        bb_upper = float(df['BB_Mid'].iloc[-1] + df['BB_Std'].iloc[-1]*2)
-        bb_lower = float(df['BB_Mid'].iloc[-1] - df['BB_Std'].iloc[-1]*2)
         hl = df['High'] - df['Low']
         hc = (df['High'] - df['Close'].shift()).abs()
         lc = (df['Low'] - df['Close'].shift()).abs()
         tr = pd.concat([hl, hc, lc], axis=1).max(axis=1)
         atr = float(tr.rolling(14).mean().iloc[-1])
-        support = float(df['Low'].rolling(20).min().iloc[-1])
-        resistance = float(df['High'].rolling(20).max().iloc[-1])
-        is_strong = False
         if price > sma20 > sma50 and rsi_val < 68 and macd > macd_sig and change > 1:
-            sig = "🟢🟢 STRONG BUY"
-            is_strong = True
-            sl = price - atr*1.5
-            tp1 = price + atr*1.5
-            tp2 = price + atr*3
+            sig = "🟢🟢 STRONG BUY"; is_strong=True; sl = price - atr*1.5; tp1 = price + atr*1.5; tp2 = price + atr*3
         elif rsi_val < 30:
-            sig = "🔵🔵 STRONG BUY - OVERSOLD"
-            is_strong = True
-            sl = price - atr*1.0
-            tp1 = price + atr*2.0
-            tp2 = price + atr*3.5
+            sig = "🔵🔵 STRONG BUY - OVERSOLD"; is_strong=True; sl = price - atr*1.0; tp1 = price + atr*2.0; tp2 = price + atr*3.5
         elif price < sma20 and sma20 < sma50 and change < -1:
-            sig = "🔴🔴 STRONG SELL"
-            is_strong = True
-            sl = price + atr*1.5
-            tp1 = price - atr*1.5
-            tp2 = price - atr*3
+            sig = "🔴🔴 STRONG SELL"; is_strong=True; sl = price + atr*1.5; tp1 = price - atr*1.5; tp2 = price - atr*3
         elif rsi_val > 75:
-            sig = "🟠🟠 STRONG SELL - OVERBOUGHT"
-            is_strong = True
-            sl = price + atr*1.0
-            tp1 = price - atr*2.0
-            tp2 = price - atr*3.5
+            sig = "🟠🟠 STRONG SELL - OVERBOUGHT"; is_strong=True; sl = price + atr*1.0; tp1 = price - atr*2.0; tp2 = price - atr*3.5
         else:
-            sig = f"⚪ WAIT - RSI {rsi_val:.1f}"
-            sl = price - atr*1.5
-            tp1 = price + atr*1.5
-            tp2 = price + atr*2.5
-        risk = abs(price - sl)
-        rr1 = abs(tp1 - price)/risk if risk else 0
-        rr2 = abs(tp2 - price)/risk if risk else 0
-        msg = f"""🚨 *{ticker.upper()} - FULL SWING* 🚨
-
-*💰 PRICE*
-Price: ${price:.2f} ({change:+.2f}%) ATR: ${atr:.2f}
-
-*📊 VOLUME*
-Vol: {vol:,.0f} Avg: {avg_vol:,.0f} Ratio: {vol_ratio:.2f}x
-
-*📈 TREND*
-SMA20: ${sma20:.2f} SMA50: ${sma50:.2f} SMA200: ${sma200:.2f}
-Trend: {'🟢 Uptrend' if sma20>sma50 else '🔴 Downtrend'}
-
-*📉 MOMENTUM*
-RSI: {rsi_val:.1f} MACD: {macd:.3f} vs {macd_sig:.3f}
-BB: ${bb_upper:.2f} / ${bb_lower:.2f}
-
-*🎯 LEVELS*
-Support: ${support:.2f} Resist: ${resistance:.2f}
-52W: ${float(df['High'].max()):.2f} / ${float(df['Low'].min()):.2f}
-
-*🚀 SIGNAL*
-{sig} {'✅ STRONG' if is_strong else '❌ WEAK'}
-
-🛑 SL: ${sl:.2f}
-🎯 TP1: ${tp1:.2f} R:R 1:{rr1:.1f}
-🎯 TP2: ${tp2:.2f} R:R 1:{rr2:.1f}
-
-💡 Swing hold 1-5 days
-"""
+            sig = f"⚪ WAIT - RSI {rsi_val:.1f}"; is_strong=False; sl = price - atr*1.5; tp1 = price + atr*1.5; tp2 = price + atr*2.5
+        msg = f"🚨 *{ticker.upper()} - FULL SWING* 🚨\n\n💰 Price: ${price:.2f} ({change:+.2f}%) ATR: ${atr:.2f}\nSMA20: ${sma20:.2f} SMA50: ${sma50:.2f}\nRSI: {rsi_val:.1f} MACD: {macd:.3f}\n\n🚀 {sig}\n\n🛑 SL: ${sl:.2f}\n🎯 TP1: ${tp1:.2f}\n🎯 TP2: ${tp2:.2f}\n\n💡 Swing hold 1-5 days"
         return msg, None, is_strong
     except Exception as e:
         return None, str(e), False
 
 async def strong_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Use: /strong AAPL or /strong GC=F")
-        return
+        await update.message.reply_text("Use: /strong AAPL or /strong GC=F"); return
     t = context.args[0].upper()
     await update.message.reply_text(f"⏳ SWING Analyzing {t}...")
     msg, err, strong = get_data(t)
-    if err:
-        await update.message.reply_text(f"❌ {err}")
-    else:
-        await update.message.reply_text(msg, parse_mode='Markdown')
+    if err: await update.message.reply_text(f"❌ {err}")
+    else: await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def scalp_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text("Use: /scalp GC=F or /scalp XAUUSD=X")
-        return
+        await update.message.reply_text("Use: /scalp GC=F or /scalp XAUUSD=X"); return
     t = context.args[0].upper()
     await update.message.reply_text(f"⚡ SCALP scanning {t} (15m)...")
     msg, err, strong = get_scalp_data(t)
-    if err:
-        await update.message.reply_text(f"❌ {err}")
-    else:
-        await update.message.reply_text(msg, parse_mode='Markdown')
+    if err: await update.message.reply_text(f"❌ {err}")
+    else: await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def scan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     wl = ["AAPL", "GC=F", "BTC-USD", "NVDA"]
@@ -236,7 +140,7 @@ async def scan_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(msg, parse_mode='Markdown')
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🚀 *SWING + SCALP LIVE!*\n\n/strong GC=F - Swing (daily)\n/scalp GC=F - Scalp (15min)\n/scan - Scan swing", parse_mode='Markdown')
+    await update.message.reply_text("🚀 *SWING + SCALP LIVE!*\n\n/strong GC=F - Swing\n/scalp GC=F - Scalp (15min)\n/scan - Scan", parse_mode='Markdown')
 
 if TOKEN:
     app = ApplicationBuilder().token(TOKEN).build()
@@ -248,4 +152,4 @@ if TOKEN:
     app.add_handler(CommandHandler("stock", strong_cmd))
     app.add_handler(CommandHandler("crypto", strong_cmd))
     app.add_handler(CommandHandler("analyze", strong_cmd))
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
