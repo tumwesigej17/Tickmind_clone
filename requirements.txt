@@ -2,4 +2,3 @@ Flask
 python-telegram-bot==20.7
 yfinance
 pandas
-curl_cffi
