@@ -1,1 +1,4 @@
-
+python-telegram-bot==20.7
+yfinance==0.2.38
+pandas==2.2.2
+ta==0.10.2
