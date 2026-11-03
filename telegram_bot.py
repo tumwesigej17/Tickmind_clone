@@ -1,10 +1,24 @@
-
+import threading
+from flask import Flask
 import os
 import logging
 import pandas as pd
 import yfinance as yf
 import ta
+# Render web service health check
+web_app = Flask(__name__)
 
+@web_app.route("/")
+def home():
+    return "Gold and BTC Telegram Bot is running!", 200
+
+@web_app.route("/health")
+def health():
+    return "OK", 200
+
+def run_web_server():
+    port = int(os.environ.get("PORT", 10000))
+    web_app.run(host="0.0.0.0", port=port)
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 
@@ -458,4 +472,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+if __name__ == "__main__":
+    logging.info("Gold and BTC bot starting...")
 
+    web_thread = threading.Thread(
+        target=run_web_server,
+        daemon=True
+    )
+    web_thread.start()
+
+    application.run_polling()
